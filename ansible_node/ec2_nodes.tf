@@ -1,7 +1,7 @@
 # configured aws provider with proper credentials
 provider "aws" {
-  region  = "us-east-1"
-  profile = "yusuf"
+  region  = "us-east-2"
+  profile = "nelson_admin_profile"
 }
 
 
@@ -29,8 +29,8 @@ resource "aws_default_subnet" "default_az1" {
 
 
 # create security group for the ec2 instance
-resource "aws_security_group" "ec2_security_group2" {
-  name        = "ec2 security group2"
+resource "aws_security_group" "ec2_security_group3" {
+  name        = "ec2 security group3"
   description = "allow access on required ports"
   vpc_id      = resource.aws_default_vpc.default_vpc.id
 
@@ -67,7 +67,7 @@ resource "aws_security_group" "ec2_security_group2" {
   }
 
   tags = {
-    Name = "ansible server sg"
+    Name = "ansible nodes"
   }
 }
 
@@ -96,16 +96,31 @@ resource "aws_instance" "ec2_instance" {
   ami                    = data.aws_ami.ubuntu.id
   instance_type          = "t2.medium"
   subnet_id              = aws_default_subnet.default_az1.id
-  vpc_security_group_ids = [aws_security_group.ec2_security_group2.id]
-  key_name               = "devopskeypair"
-  count                  = 4
+  vpc_security_group_ids = [aws_security_group.ec2_security_group3.id]
+  key_name               = "cloud_convo_key_pair"
+  count=3 
+  user_data = <<-EOF
+              #!/bin/bash
+
+              # Set the password for the ubuntu user
+              echo "ubuntu:defaultpass" | chpasswd
+
+              # Enable password authentication in sshd config
+              sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/g' /etc/ssh/sshd_config
+
+              # Restart sshd
+              systemctl restart sshd
+
+              # Enable sshd
+              systemctl enable sshd
+              EOF
 
   tags = {
-    Name = "ansible server"
+    Name = "ansible nodes"
   }
 
 }
-# print the url of the container
+# print the url of the server
 output "container_url" {
  value = ["${aws_instance.ec2_instance.*.public_ip}"]
 }
