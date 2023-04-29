@@ -1,14 +1,16 @@
 ---
-- name: set up webserver
+- name: Install and Start Nginx
   hosts: all
   become: true
+
   tasks:
-    - name: ensure nginx is at the latest version
+    - name: Install Nginx package
       apt:
         name: nginx
         state: latest
-    - name: start nginx
+    - name: Start Nginx service
       service:
         name: nginx
         state: started
-        enabled: yes  # if you want to also enable nginx
+        enabled: true
+
